@@ -10,12 +10,9 @@ import 'package:geofit/models/usuario.dart';
 import 'package:geofit/models/app_colors.dart';
 import 'package:geofit/models/app_dimensions.dart';
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────
 // Modelo auxiliar: representa un alimento añadido a la lista
 // ─────────────────────────────────────────────
-=======
->>>>>>> dd4388feed10aea6a261b8f796f4e238ac56b83d
 class AlimentoEnLista {
   final String nombre;
   final double gramos;
@@ -23,7 +20,6 @@ class AlimentoEnLista {
   final double proteina;
   final double carbohidratos;
   final double grasas;
-<<<<<<< HEAD
 
   AlimentoEnLista({
     required this.nombre,
@@ -542,172 +538,6 @@ class ContCalEstado extends State<ContCal> {
           ],
         ),
       ),
-=======
-  AlimentoEnLista({required this.nombre, required this.gramos, required this.calorias, required this.proteina, required this.carbohidratos, required this.grasas});
-}
-
-class ContCal extends StatefulWidget {
-  final Usuario? usuario;
-  const ContCal({super.key, this.usuario});
-  @override
-  State<ContCal> createState() => ContCalState();
-}
-
-class ContCalState extends State<ContCal> {
-  double miSaldo = 15.50;
-  void actualizarSaldo(double cantidad) { setState(() { miSaldo += cantidad; }); }
-
-  final AlimentoDAO alimentoDAO = AlimentoDAO();
-  final HistorialDAO historialDAO = HistorialDAO();
-  List<Alimento> alimentosDisponibles = [];
-  Alimento? alimentoSeleccionado;
-  final TextEditingController gramosController = TextEditingController();
-  List<AlimentoEnLista> listaAlimentos = [];
-
-  @override
-  void initState() { super.initState(); cargarAlimentos(); }
-
-  Future<void> cargarAlimentos() async {
-    final alimentos = await alimentoDAO.getAllAlimentos();
-    setState(() { alimentosDisponibles = alimentos; });
-  }
-
-  void mostrarSnackBar(String mensaje, {Color color = AppColors.error}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [const Icon(Icons.warning_amber_rounded, color: AppColors.white, size: 20), const SizedBox(width: AppDimensions.paddingSmall), Expanded(child: Text(mensaje))]),
-      backgroundColor: color, behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusSmall)),
-      margin: const EdgeInsets.all(AppDimensions.snackBarMargin), duration: const Duration(seconds: 3)));
-  }
-
-  void agregarALista() {
-    final t = AppLocalizations.of(context)!;
-    if (alimentoSeleccionado == null) { mostrarSnackBar(t.selectFoodFirst, color: AppColors.warning); return; }
-    if (gramosController.text.trim().isEmpty) { mostrarSnackBar(t.enterGrams); return; }
-    final double? gramos = double.tryParse(gramosController.text.trim());
-    if (gramos == null) { mostrarSnackBar(t.onlyNumbersGrams); return; }
-    if (gramos < 0) { mostrarSnackBar(t.noNegativeGrams); return; }
-    if (gramos == 0) { mostrarSnackBar(t.noZeroGrams); return; }
-    final factor = gramos / 100.0;
-    final item = AlimentoEnLista(nombre: alimentoSeleccionado!.nombre, gramos: gramos,
-      calorias: alimentoSeleccionado!.calorias * factor, proteina: alimentoSeleccionado!.proteina * factor,
-      carbohidratos: alimentoSeleccionado!.carbohidratos * factor, grasas: alimentoSeleccionado!.grasas * factor);
-    setState(() { listaAlimentos.add(item); gramosController.clear(); alimentoSeleccionado = null; });
-  }
-
-  void eliminarDeLista(int index) { setState(() { listaAlimentos.removeAt(index); }); }
-
-  Future<void> mostrarPopupCalculo() async {
-    final t = AppLocalizations.of(context)!;
-    if (listaAlimentos.isEmpty) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.addAtLeastOne), backgroundColor: AppColors.warning)); return; }
-    if (widget.usuario == null) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.mustLoginHistory), backgroundColor: AppColors.error)); return; }
-
-    double totalCalorias = 0, totalProteinas = 0, totalCarbohidratos = 0, totalGrasas = 0;
-    for (final item in listaAlimentos) { totalCalorias += item.calorias; totalProteinas += item.proteina; totalCarbohidratos += item.carbohidratos; totalGrasas += item.grasas; }
-    await guardarEnHistorial(totalCalorias, totalProteinas, totalCarbohidratos, totalGrasas);
-    if (!mounted) return;
-
-    showDialog(context: context, barrierDismissible: true, builder: (BuildContext context) {
-      final t2 = AppLocalizations.of(context)!;
-      return AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
-        title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Row(children: [const Icon(Icons.restaurant_menu, color: AppColors.primary), const SizedBox(width: 8),
-            Expanded(child: Text(t2.nutritionalSummary, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)))]),
-          const SizedBox(height: 8),
-          Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: AppColors.greenLight, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge), border: Border.all(color: AppColors.primary)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.check_circle, color: AppColors.primary, size: 14), const SizedBox(width: 4),
-              Text(t2.savedInHistory, style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600))])),
-        ]),
-        content: SizedBox(width: double.maxFinite, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(t2.foodsAdded, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.grey)),
-          const SizedBox(height: 8),
-          ...listaAlimentos.map((item) => Padding(padding: const EdgeInsets.only(bottom: 6), child: Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-            decoration: BoxDecoration(color: AppColors.greyLightest, borderRadius: BorderRadius.circular(AppDimensions.radiusSmall), border: Border.all(color: AppColors.greyBorderLight)),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${item.nombre} — ${item.gramos.toStringAsFixed(0)}g', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(height: 4),
-              Text('Cal: ${item.calorias.toStringAsFixed(1)} · Prot: ${item.proteina.toStringAsFixed(1)}g · Carb: ${item.carbohidratos.toStringAsFixed(1)}g · ${t2.fats}: ${item.grasas.toStringAsFixed(1)}g',
-                style: TextStyle(fontSize: 11, color: AppColors.greyText)),
-            ])))),
-          const SizedBox(height: 12), const Divider(thickness: 2), const SizedBox(height: 8),
-          Text(t2.totals, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
-          const SizedBox(height: 10),
-          totalRow(Icons.local_fire_department, t2.calories, '${totalCalorias.toStringAsFixed(1)} kcal', AppColors.calorieColor),
-          totalRow(Icons.fitness_center, t2.proteins, '${totalProteinas.toStringAsFixed(1)} g', AppColors.error),
-          totalRow(Icons.grain, t2.carbs, '${totalCarbohidratos.toStringAsFixed(1)} g', AppColors.carbColor),
-          totalRow(Icons.water_drop, t2.fats, '${totalGrasas.toStringAsFixed(1)} g', AppColors.fatColor),
-        ]))),
-        actions: [ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusSmall))),
-          onPressed: () { Navigator.pop(context); setState(() { listaAlimentos.clear(); }); },
-          child: Text(t2.accept, style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)))],
-      );
-    });
-  }
-
-  Widget totalRow(IconData icon, String label, String value, Color color) {
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-      Icon(icon, size: 20, color: color), const SizedBox(width: 8),
-      Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-      Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color)),
-    ]));
-  }
-
-  Future<void> guardarEnHistorial(double calorias, double proteinas, double carbohidratos, double grasas) async {
-    final detalleLines = listaAlimentos.map((item) =>
-      '${item.nombre} (${item.gramos.toStringAsFixed(0)}g): ${item.calorias.toStringAsFixed(1)} kcal, ${item.proteina.toStringAsFixed(1)}g prot, ${item.carbohidratos.toStringAsFixed(1)}g carb, ${item.grasas.toStringAsFixed(1)}g grasas'
-    ).join('\n');
-    final historial = Historial(idUsuario: widget.usuario!.id!, caloriasTotales: calorias, proteinasTotales: proteinas,
-      carbohidratosTotales: carbohidratos, grasasTotales: grasas, detalle: detalleLines, fecha: DateTime.now().toIso8601String());
-    await historialDAO.insertHistorial(historial);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: GeoFitAppBar(miSaldo: miSaldo, actualizarSaldo: actualizarSaldo),
-      body: Padding(padding: const EdgeInsets.only(bottom: AppDimensions.paddingMedium, left: AppDimensions.paddingMedium, right: AppDimensions.paddingMedium),
-        child: Column(children: [
-          Padding(padding: const EdgeInsets.only(top: 15), child: DropdownButtonFormField<Alimento>(
-            value: alimentoSeleccionado, hint: Text(t.selectProduct),
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            items: alimentosDisponibles.map((a) => DropdownMenuItem(value: a, child: Text('${a.nombre}  (${a.calorias.toStringAsFixed(0)} kcal/100g)'))).toList(),
-            onChanged: (value) { setState(() { alimentoSeleccionado = value; }); })),
-          const SizedBox(height: 20),
-          TextField(controller: gramosController, keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-            decoration: InputDecoration(labelText: t.grams, border: const OutlineInputBorder())),
-          Padding(padding: const EdgeInsets.only(top: 20), child: ElevatedButton(onPressed: agregarALista,
-            child: Text(t.addToList, style: const TextStyle(color: AppColors.primary)))),
-          const SizedBox(height: 10),
-          Expanded(child: Padding(padding: const EdgeInsets.only(top: 10), child: Container(
-            width: double.infinity, padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-            decoration: BoxDecoration(border: Border.all(color: AppColors.grey), borderRadius: BorderRadius.circular(8)),
-            child: listaAlimentos.isEmpty
-              ? Center(child: Text(t.noFoodsAdded))
-              : ListView.builder(itemCount: listaAlimentos.length, itemBuilder: (context, index) {
-                  final item = listaAlimentos[index];
-                  return Card(margin: const EdgeInsets.symmetric(vertical: 4), child: ListTile(
-                    leading: const Icon(Icons.restaurant, color: AppColors.primary),
-                    title: Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('${item.gramos.toStringAsFixed(0)} g', style: TextStyle(fontSize: 13, color: AppColors.greyText)),
-                    trailing: IconButton(icon: const Icon(Icons.delete, color: AppColors.error), onPressed: () => eliminarDeLista(index))));
-                })))),
-          const SizedBox(height: 25),
-          Padding(padding: const EdgeInsets.only(bottom: 30), child: SizedBox(width: double.infinity, height: AppDimensions.buttonHeightSmall,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusCard))),
-              onPressed: () => mostrarPopupCalculo(),
-              child: Text(t.calculateMacros, style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 16))))),
-          const SizedBox(height: 20),
-        ])),
->>>>>>> dd4388feed10aea6a261b8f796f4e238ac56b83d
     );
   }
 }
